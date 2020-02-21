@@ -5,7 +5,6 @@
  * Copyright (c) 2014-2016 cnezsoft.com; Licensed MIT
  * ======================================================================== */
 
-
 (function($, undefined) {
     'use strict';
 
@@ -20,7 +19,7 @@
                 width: $th.outerWidth()
             }, $th.data()));
             if ($th.attr('colspan') && $th.attr('colspan') !== '1') {
-                throw new Erorr('Table th element with colspan attribute is not support.');
+                throw new Error('Table th element with colspan attribute is not support.');
             }
         });
         var data = [];
@@ -45,8 +44,8 @@
     var DEFAULT_VALUE_OPERATOR = {
         date: {
             getter: function(dataValue, cell, dataGrid) {
-                var formater = dataGrid.options.defaultDateFormater;
-                return Date.create(dataValue).format(formater);
+                var formatter = dataGrid.options.defaultDateFormatter || dataGrid.options.defaultDateFormater;
+                return Date.create(dataValue).format(formatter);
             },
             setter: function(inputValue, cell, dataGrid) {
                 if (typeof inputValue === 'string') {
@@ -62,8 +61,7 @@
         }
     };
 
-    var DEFAULT_CONFIGS = {
-    };
+    var DEFAULT_CONFIGS = {};
 
     var DEFAULT_PAGER = {
         page: 0,        // current page index
@@ -152,8 +150,14 @@
         that.id        = 'zui-datagrid-' + that.uuid;
         options        = $.extend({}, DataGrid.DEFAULTS, that.$.data(), options);
 
-        var lang   = options.lang || 'zh_cn';
-        that.lang  = $.isPlainObject(lang) ? ($.extend(true, {}, LANG[lang.lang || $.zui.clientLang()], lang)) : LANG[lang];
+        var defaultLang = $.zui.clientLang ? $.zui.clientLang() : 'en';
+        var lang        = options.lang;
+        if ($.isPlainObject(lang)) {
+            that.lang = $.extend(true, {}, $.zui.getLangData ? $.zui.getLangData(NAME, defaultLang, LANG) : LANG[defaultLang], lang);
+        } else {
+            lang = lang || defaultLang;
+            that.lang = $.zui.getLangData ? $.zui.getLangData(NAME, lang, LANG) : (LANG[lang] || LANG[defaultLang]);
+        }
 
         options.valueOperator    = $.extend({}, DEFAULT_VALUE_OPERATOR, options.valueOperator);
         options.rowDefaultHeight = options.rowDefaultHeight || 30;
@@ -239,8 +243,16 @@
         var isWindows = window.navigator.userAgent.match(/Win/i);
         if (isWindows) mouseWheelFactor *= 20;
         $container.on('mousewheel', function(event) {
-            that.scroll(that.layout.scrollLeft - Math.round(event.deltaX * mouseWheelFactor), that.layout.scrollTop - Math.round(event.deltaY * mouseWheelFactor));
-            event.preventDefault();
+            // check whether need scroll
+            var layout = that.layout;
+            var scrollLeft = layout.scrollLeft - Math.round(event.deltaX * mouseWheelFactor);
+            var scrollTop = layout.scrollTop - Math.round(event.deltaY * mouseWheelFactor);
+            scrollLeft = Math.max(0, Math.min(scrollLeft, layout.width - layout.containerWidth));
+            scrollTop = Math.max(0, Math.min(scrollTop, layout.height - layout.containerHeight));
+            if (scrollLeft !== layout.scrollLeft || scrollTop !== layout.scrollTop) {
+                that.scroll(scrollLeft, scrollTop);
+                event.preventDefault();
+            }
         });
 
         that.$container = $container;
@@ -271,7 +283,6 @@
         that.setDataSource(options.dataSource);
 
         if (options.responsive) {
-            var lastContainerWidth = $container.width();
             $container.on('resize', function() {
                 that.layout.cols = null;
                 that.render();
@@ -304,6 +315,14 @@
                     sortBy = '';
                 }
                 that.sortBy(sortBy, order);
+            });
+        }
+
+        if (options.onClickCell) {
+            $cells.on('click', '.datagrid-cell', function(e) {
+                var $cell = $(this);
+                var cell = that.getCell($cell.data('row'), $cell.data('col'));
+                that.$.callComEvent(that, 'onClickCell', [e, cell, $cell]);
             });
         }
 
@@ -406,6 +425,10 @@
     };
 
     DataGrid.prototype.goToPage = function(page) {
+        return this.goToPage(page);
+    };
+
+    DataGrid.prototype.gotoPage = function(page) {
         return this.setPager(page).render();
     };
 
@@ -442,7 +465,7 @@
     DataGrid.prototype.setDataSource = function(data, cols) {
         var that = this;
         var dataSource = {};
-        var oldcols = that.dataSource && that.dataSource.cols;
+        var oldCols = that.dataSource && that.dataSource.cols;
         if ($.isArray(data)) {
             dataSource.array = data;
             dataSource.length = data.length;
@@ -469,7 +492,7 @@
         }
         that.dataSource = dataSource;
 
-        cols = cols || dataSource.cols || oldcols || [];
+        cols = cols || dataSource.cols || oldCols || [];
         if (cols.length) {
             for (var i = 0; i < cols.length; ++i) {
                 var col = cols[i];
@@ -478,7 +501,7 @@
                 }
             }
         }
-        if (cols !== oldcols) {
+        if (cols !== oldCols) {
             that.layout.cols = null;
         }
         dataSource.cols = cols;
@@ -637,9 +660,9 @@
 
     DataGrid.prototype.showMessage = function(message, type, autoCloseTime) {
         var that = this;
-        if (that.msgerAutoCloseTimer) {
-            clearTimeout(that.msgerAutoCloseTimer);
-            that.msgerAutoCloseTimer = null;
+        if (that.messagerAutoCloseTimer) {
+            clearTimeout(that.messagerAutoCloseTimer);
+            that.messagerAutoCloseTimer = null;
         }
         var $messager = that.$container.find('.datagrid-messager');
         if (!message) {
@@ -653,18 +676,18 @@
         if (!$messager.length) {
             $messager = $('<div class="datagrid-messager" style="display: none"><div class="content"></div><button type="button" class="close">×</button></div>').appendTo(that.$container).on('click', '.close', function() {
                 $messager.slideUp();
-                if (that.msgerAutoCloseTimer) {
-                    clearTimeout(that.msgerAutoCloseTimer);
-                    that.msgerAutoCloseTimer = null;
+                if (that.messagerAutoCloseTimer) {
+                    clearTimeout(that.messagerAutoCloseTimer);
+                    that.messagerAutoCloseTimer = null;
                 }
             });
         }
         $messager.attr('class', 'datagrid-messager bg-' + type).find('.content').text(message);
         $messager.slideDown();
         if (autoCloseTime) {
-            that.msgerAutoCloseTimer = setTimeout(function() {
+            that.messagerAutoCloseTimer = setTimeout(function() {
                 $messager.slideUp();
-                that.msgerAutoCloseTimer = null;
+                that.messagerAutoCloseTimer = null;
             }, autoCloseTime);
         }
     };
@@ -768,7 +791,7 @@
             });
         }
 
-        // Caculate cols layout
+        // Calculate cols layout
         if (!layout.cols) {
             var cols                = dataSource.cols;
             var colAutoMinWidth     = options.colAutoMinWidth;
@@ -829,8 +852,7 @@
             }
             var flexWidth    = containerWidth - fixedWidth;
             var autoOverflow = flexWidth < minGrowWidth;
-            var colsLenght   = colsLayout.length;
-            for (var j = 0; j < colsLenght; ++j) {
+            for (var j = 0; j < colsLayout.length; ++j) {
                 colLayout = colsLayout[j];
                 colWidth = colLayout.width;
                 if (!colWidth && colWidth !== 0) {
@@ -951,7 +973,9 @@
         }
         var dataItem = rowIndex > 0 ? that.getDataItem(rowIndex - 1) : null;
         config.data = dataItem;
-        var rowId = dataItem && (dataItem.rowId || dataItem.id);
+        if (dataItem) {
+            rowId = dataItem.rowId || dataItem.id;
+        }
         config.rowId = rowId !== undefined ? rowId : (rowIndex === 0 ? '#header' : rowIndex);
         return config;
     };
@@ -1037,16 +1061,37 @@
             }
         }
         that.renderRow(rowIndex);
-        if (rowIndex === 0 && that.layout.rowsLength < 500) {
+        if (rowIndex === 0) {
+            that.toggleAnimation(false);
             for (var i = 1; i < that.layout.rowsLength; ++i) {
                 that.checkRow(i, checked, true);
             }
+            that.toggleAnimation(true);
         }
         that.renderFixeds();
         if (!holdEvents) {
-            that.$.callComEvent(that, 'onSelectRow', [rowId || 'all', checked, selections]);
+            that.$.callComEvent(that, 'onSelectRow', [rowId, checked, selections]);
         }
         return checked;
+    };
+
+    DataGrid.prototype.toggleAnimation = function(toggle) {
+        var that = this;
+        if (toggle === undefined) {
+            toggle = that.$.hasClass('no-animation');
+        }
+        if (that.toggleAnimationTimer) {
+            clearTimeout(that.toggleAnimationTimer);
+            that.toggleAnimationTimer = null;
+        }
+        if (!toggle) {
+            that.$.addClass('no-animation');
+        } else {
+            that.toggleAnimationTimer = setTimeout(function() {
+                that.toggleAnimationTimer = null;
+                that.$.removeClass('no-animation');
+            }, 500);
+        }
     };
 
     DataGrid.prototype.getCheckItems = function() {
@@ -1091,7 +1136,7 @@
             }
         }
 
-        // Caculate cell style
+        // Calculate cell style
         var borderWidth     = options.borderWidth;
         var layout          = that.layout;
         var colsLength      = layout.colsLength;
@@ -1121,8 +1166,9 @@
         var style = $.extend({}, configStyle, cellBoundsStyle);
         $cell.css(style).toggleClass('datagrid-cell-span', !!config.span);
 
-        if (options.cellFormator) {
-            options.cellFormator($cell, cell, that);
+        var cellFormatter = options.cellFormatter || options.cellFormator;
+        if (cellFormatter) {
+            cellFormatter($cell, cell, that);
         } else {
             var $content = isCheckbox ? $cell.find('.content') : $cell;
             $content[cell.config.html ? 'html' : 'text'](cell.value);
@@ -1515,7 +1561,7 @@
         // cellCreator: null,
 
         // Format cell element
-        // cellFormator: null,
+        // cellFormatter: null,
 
         // Row creator
         // rowCreator: null,
@@ -1538,8 +1584,8 @@
         // Value operator
         // valueOperator: null,
 
-        // Default date formater
-        defaultDateFormater: 'yyyy-MM-dd hh:mm',
+        // Default date formatter
+        defaultDateFormatter: 'yyyy-MM-dd hh:mm',
 
         // Partial rendering can show large amount data in high efficiency
         partialRendering: 'auto',
@@ -1555,6 +1601,9 @@
 
         // On render datagrid
         // onRender: null,
+
+        // On click cell
+        // onClickCell: null,
 
         // Search filter function
         // searchFunc: null,
@@ -1577,7 +1626,7 @@
         mouseWheelFactor: 1,
     };
 
-    // Extense jquery element
+    // Extend jquery element
     $.fn.datagrid = function(option) {
         return this.each(function() {
             var $this = $(this);
@@ -1599,4 +1648,3 @@
         $('[data-ride="datagrid"]').datagrid();
     });
 }(jQuery, undefined));
-

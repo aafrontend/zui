@@ -2,10 +2,10 @@
   "lib": {
     "jquery": {
       "name": "jQuery",
-      "pver": "1.10.2",
+      "pver": "1.12.4",
       "ver": "1.0.0",
       "src": {
-        "resource": ["assets/jquery.js"]
+        "resource": ["assets/jquery-3.4.1.min.js", "assets/jquery-migrate-3.1.0.js", "assets/jquery-migrate-3.1.0.min.js"]
       },
       "desc": "ZUI的绝大部分JS组件都依赖于jQuery",
       "website": "http://jquery.com/",
@@ -439,7 +439,7 @@
       "src": {
         "less": ["~/controls/loading.less"]
       },
-      "ver": "1.8.1"
+      "ver": "1.9.0"
     },
     "table.basic": {
       "name": "基本表格",
@@ -998,7 +998,7 @@
         "js": ["src/js/menu.js"]
       },
       "ver": "1.0.0",
-      "dpds": ["basic", "navs", "button"],
+      "dpds": ["basic", "navs"],
       "require": ["jquery"]
     },
     "imgcutter": {
@@ -1029,8 +1029,36 @@
       "name": "Kindeditor",
       "src": {
         "less": ["~/modules/kindeditor.less"],
-        "js": ["assets/kindeditor/kindeditor-all.js"],
-        "resource": ["assets/kindeditor//themes/**/*", "assets/kindeditor//lang/**/*", "assets/kindeditor//plugins.zip", "assets/kindeditor//README.md"]
+        "js": [
+          "~/kindeditor/kindeditor.js",
+          "~/kindeditor/plugins/lang.js",
+          "~/kindeditor/plugins/anchor.js",
+          "~/kindeditor/plugins/autoheight.js",
+          "~/kindeditor/plugins/baidumap.js",
+          "~/kindeditor/plugins/clearhtml.js",
+          "~/kindeditor/plugins/code.js",
+          "~/kindeditor/plugins/emoticons.js",
+          "~/kindeditor/plugins/filemanager.js",
+          "~/kindeditor/plugins/flash.js",
+          "~/kindeditor/plugins/image.js",
+          "~/kindeditor/plugins/insertfile.js",
+          "~/kindeditor/plugins/lineheight.js",
+          "~/kindeditor/plugins/link.js",
+          "~/kindeditor/plugins/map.js",
+          "~/kindeditor/plugins/media.js",
+          "~/kindeditor/plugins/multiimage.js",
+          "~/kindeditor/plugins/pagebreak.js",
+          "~/kindeditor/plugins/plainpaste.js",
+          "~/kindeditor/plugins/preview.js",
+          "~/kindeditor/plugins/quickformat.js",
+          "~/kindeditor/plugins/template.js",
+          "~/kindeditor/plugins/wordpaste.js",
+          "~/kindeditor/plugins/zui.js",
+          "~/kindeditor/plugins/placeholder.js",
+          "~/kindeditor/plugins/paste-image.js",
+          "~/kindeditor/plugins/advance-table.js"
+        ],
+        "resource": ["assets/kindeditor//themes/**/*", "assets/kindeditor//lang/**/*", "assets/kindeditor//plugins.zip", "src/js/kindeditor//lang/**/*", "assets/kindeditor//README.md"]
       },
       "ver": "1.0.0",
       "dpds": ["basic"],
@@ -1185,7 +1213,7 @@
         "js": ["src/js/dashboard.js"]
       },
       "ver": "1.0.0",
-      "dpds": ["panels", "grid", "icons"],
+      "dpds": ["grid", "icons"],
       "require": ["jquery"]
     },
     "board": {
@@ -1195,7 +1223,7 @@
         "js": ["src/js/boards.js"]
       },
       "ver": "1.0.0",
-      "dpds": ["jqueryex", "panels", "droppable"],
+      "dpds": ["jqueryex", "droppable"],
       "require": ["jquery"]
     },
     "tabs": {
@@ -1410,6 +1438,38 @@
       },
       "ver": "1.8.1",
       "ignoreDpds": false
+    },
+    "guideViewer": {
+      "name": "步骤查看组件",
+      "src": {
+        "js": ["src/js/guide.viewer.js"]
+      },
+      "ver": "1.9.2",
+      "ignoreDpds": false
+    },
+    "lang.ja": {
+      "name": "日语插件",
+      "src": {
+        "js": ["src/js/lang/ja.js"]
+      },
+      "ver": "1.9.3",
+      "ignoreDpds": false
+    },
+    "lang.fr": {
+      "name": "法语插件",
+      "src": {
+        "js": ["src/js/lang/fr.js"]
+      },
+      "ver": "1.9.3",
+      "ignoreDpds": false
+    },
+    "lang.de": {
+      "name": "德语插件",
+      "src": {
+        "js": ["src/js/lang/de.js"]
+      },
+      "ver": "1.9.3",
+      "ignoreDpds": false
     }
   },
   "builds": {
@@ -1444,13 +1504,35 @@
       "subdirectories": false,
       "includes": ["colorset.less2js"]
     },
+    "lang.fr": {
+      "title": "Lang.fr",
+      "dest": "dist/js/langs",
+      "filename": "zui.lang.fr",
+      "includes": ["lang.fr"]
+    },
+    "lang.ja": {
+      "title": "Lang.ja",
+      "dest": "dist/js/langs",
+      "filename": "zui.lang.ja",
+      "includes": ["lang.ja"]
+    },
+    "lang.de": {
+      "title": "Lang.de",
+      "dest": "dist/js/langs",
+      "filename": "zui.lang.de",
+      "includes": ["lang.de"]
+    },
+    "langs": {
+      "title": "Lang data files",
+      "bundles": ["lang.fr", "lang.ja", "lang.de"]
+    },
     "seperate": {
       "title": "Seperate bundles",
-      "bundles": ["jquery", "calendar", "kindeditor", "datetimepicker", "chosen", "chosenicons", "imgcutter", "datatable", "datagrid", "ieonly", "chart", "array", "hotkey", "board", "tabs", "migrate1.2", "clipboard", "prettify", "sortable", "selectable", "colorpicker", "colorset.js", "imgready", "dashboard", "bootbox", "ueditor", "uploader", "treemap", "ajaxFake", "markdoc"]
+      "bundles": ["jquery", "calendar", "kindeditor", "datetimepicker", "chosen", "chosenicons", "imgcutter", "datatable", "datagrid", "ieonly", "chart", "array", "hotkey", "board", "tabs", "migrate1.2", "clipboard", "prettify", "sortable", "selectable", "colorpicker", "colorset.js", "imgready", "dashboard", "bootbox", "ueditor", "uploader", "treemap", "ajaxFake", "markdoc", "contextmenu"]
     },
     "dist": {
       "title": "Dist bundles",
-      "bundles": ["standard", "lite", "theme", "seperate"]
+      "bundles": ["standard", "lite", "theme", "seperate", "langs"]
     },
     "doc": {
       "title": "Document",

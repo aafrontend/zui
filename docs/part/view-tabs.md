@@ -1,5 +1,12 @@
 # 标签管理器
 
+<div class="alert alert-warning">
+  <h4>兼容性提示</h4>
+  <ul>
+    <li>在移动设备上的浏览器上可能存在兼容性问题。</li>
+  </ul>
+</div>
+
 ## 综合示例
 
 <div class="example">
@@ -100,7 +107,7 @@ $('#tabsExample').tabs({tabs: tabs});
       <td>当前界面语言</td>
       <td>默认为 `'zh_cn'`</td>
       <td>
-        <p>所以可用的选项包括：</p>
+        <p>所有可用的选项包括：</p>
         <ul>
           <li>`zh_cn`：使用中文简体界面；</li>
           <li>`zh_tw`：使用中文繁体界面；</li>

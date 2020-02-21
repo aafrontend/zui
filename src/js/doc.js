@@ -1,9 +1,9 @@
 /* ========================================================================
- * ZUI: doc.js
- * For document UI
- * http://zui.sexy
- * ========================================================================
- * Copyright (c) 2014-2016 cnezsoft.com; Licensed MIT
+* For document UI
+* http://zui.sexy
+* ========================================================================
+* Copyright (c) 2014-2016 cnezsoft.com; Licensed MIT
+* ZUI: doc.js
  * ======================================================================== */
 
 
@@ -389,7 +389,7 @@
                     section.target = '';
                 }
 
-                if(section.hidden) return;
+                if(section.hidden || (section.beta && !debug)) return;
 
                 var id = chapterName + '-' + section.id;
                 var $tpl = $sectionTemplate.clone().data('section', section);
@@ -2296,4 +2296,3 @@
         pkg: zuiPkg
     };
 }(window, jQuery));
-

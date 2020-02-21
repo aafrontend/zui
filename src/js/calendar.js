@@ -60,22 +60,22 @@
         this.$.attr('id', this.id);
         this.storeName = NAME + '.' + this.id;
 
-        this.getOptions(options);
+        options = this.getOptions(options);
         this.getLang();
 
-        this.resetData(this.options.data);
+        this.resetData(options.data);
 
         this.storeData = $.zui.store.pageGet(this.storeName, {
             date: 'today',
             view: 'month'
         });
 
-        this.date = this.options.startDate || 'today';
-        this.view = this.options.startView || 'month';
+        this.date = options.startDate || 'today';
+        this.view = options.startView || 'month';
 
         this.$.toggleClass('limit-event-title', options.limitEventTitle);
 
-        if(this.options.withHeader) {
+        if(options.withHeader) {
             var $header = this.$.children('.calender-header');
             if(!$header.length) {
                 $header = $('<header class="calender-header"><div class="btn-toolbar"><div class="btn-group"><button type="button" class="btn btn-today">{today}</button></div><div class="btn-group"><button type="button" class="btn btn-prev"><i class="icon-chevron-left"></i></button><button type="button" class="btn btn-next"><i class="icon-chevron-right"></i></button></div><div class="btn-group"><span class="calendar-caption"></span></div></div></header>'.format(this.lang));
@@ -140,7 +140,8 @@
         storage: true,
         withHeader: true,
         dragThenDrop: true, // drag an event and drop at another day,
-        // hideEmptyWeekends: false // Auto hide empty weekends
+        // hideEmptyWeekends: false // Auto hide empty weekends,
+        // hideFirstDayNumber: false // Hide first day number in every month
     };
 
     Calendar.prototype.resetData = function(data) {
@@ -202,19 +203,22 @@
             that.display();
             $e.callComEvent(that, 'clickPrevBtn');
         }).on('click', '.event', function(event) {
+            event.stopPropagation();
+            if ($(event.target).closest('.event-btn').length) {
+                return;
+            }
             $e.callComEvent(that, 'clickEvent', {
                 element: this,
                 event: $(this).data('event'),
                 events: that.events
-            });
-            event.stopPropagation();
-        }).on('click', '.cell-day', function() {
+            }, event);
+        }).on('click', '.cell-day', function(e) {
             $e.callComEvent(that, 'clickCell', {
                 element: this,
                 view: that.view,
                 date: new Date($(this).children('.day').attr('data-date')),
                 events: that.events
-            });
+            }, e);
         });
     };
 
@@ -397,10 +401,12 @@
 
     Calendar.prototype.getOptions = function(options) {
         this.options = $.extend(true, {}, Calendar.DEFAULTS, this.$.data(), options, true);
+        return this.options;
     };
 
     Calendar.prototype.getLang = function() {
-        this.lang = this.options.langs[(this.options.lang || ($.zui && $.zui.clientLang ? $.zui.clientLang() : 'zh_cn')).replace('-', '_')];
+        this.langName = this.options.lang || $.zui.clientLang();
+        this.lang = $.zui.getLangData(NAME, this.langName, this.options.langs);
     };
 
     Calendar.prototype.display = function(view, date) {
@@ -492,9 +498,7 @@
         }
 
         var $weeks = $view.find('.week-days'),
-            $days = $view.find('.day'),
             firstDayOfMonth = getFirstDayOfMonth(date),
-            // lastDayOfMonth = getLastDayOfMonth(date),
             $week,
             $day,
             $cell,
@@ -526,14 +530,14 @@
                 month = printDate.getMonth();
                 printDateId = printDate.toDateString();
                 $day.attr('data-date', printDateId).data('date', printDate.clone());
-                $day.find('.heading > .number').text(day);
-
+                $day.find('.heading > .number').text(day).toggle(!options.hideFirstDayNumber || day !== 1);
                 $day.find('.heading > .month')
                     .toggle((weekIdx === 0 && dayIndex === 0) || day === 1)
                     .text(((month === 0 && day === 1) ? (lang.year.format(year) + ' ') : '') + lang.monthNames[month]);
                 $cell.toggleClass('current-month', month === thisMonth);
                 $cell.toggleClass('current', (day === todayDate && month === todayMonth && year === todayYear));
                 $cell.toggleClass('past', printDate < today);
+                $cell.toggleClass('first-day', day === 1);
                 $cell.toggleClass('future', printDate > today);
                 $dayEvents = $day.find('.events').empty();
 
@@ -591,6 +595,8 @@
                         $dayEvents.append($event);
                     }
                 }
+
+                $cell.toggleClass('empty', !$day.find('.events').length);
 
                 if (options.dayFormater) {
                     options.dayFormater($cell, printDate, dayEvents, that);
@@ -728,4 +734,3 @@
 
     $.fn.calendar.Constructor = Calendar;
 }(jQuery, window));
-
